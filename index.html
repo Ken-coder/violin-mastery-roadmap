@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Violin Roadmap to Mastery</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="hero" id="home">
+      <nav class="topbar" aria-label="Primary navigation">
+        <a href="#home" class="brand">Violin Mastery Map</a>
+        <div class="nav-links">
+          <a href="#dashboard">Dashboard</a>
+          <a href="#milestones">Milestones</a>
+          <a href="#resources">Resources</a>
+        </div>
+      </nav>
+
+      <section class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Stentor Student I 1400A learning path</p>
+          <h1>Beginner to Stage Performer</h1>
+          <p class="lead">
+            A bright, practical infographic roadmap for building posture, tone,
+            intonation, rhythm, technique, repertoire, and performance confidence
+            one trackable day at a time.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#setup">Set Start Date</a>
+            <a class="button ghost" href="#milestones">Open Milestones</a>
+          </div>
+        </div>
+        <div class="violin-visual" aria-label="Violin practice illustration">
+          <div class="sun-band"></div>
+          <div class="score-lines"></div>
+          <div class="violin-body">
+            <div class="upper"></div>
+            <div class="waist"></div>
+            <div class="lower"></div>
+            <div class="fingerboard"></div>
+            <div class="bridge"></div>
+            <div class="strings"></div>
+          </div>
+          <div class="bow"></div>
+          <div class="note note-a">♪</div>
+          <div class="note note-b">♬</div>
+          <div class="note note-c">♩</div>
+        </div>
+      </section>
+    </header>
+
+    <main>
+      <section class="setup-section" id="setup">
+        <div class="section-heading">
+          <p class="eyebrow">Personalize the roadmap</p>
+          <h2>Start Date, Finish Date, and Alert Email</h2>
+        </div>
+        <form class="setup-panel" id="setupForm">
+          <label>
+            Start learning on
+            <input id="startDate" type="date" required>
+          </label>
+          <label>
+            Alert email
+            <input id="alertEmail" type="email" value="debuggkim@gmail.com" required>
+          </label>
+          <label>
+            Daily alert check time
+            <input id="alertTime" type="time" value="20:00" required>
+          </label>
+          <button class="button primary" type="submit">Update Dashboard</button>
+        </form>
+        <div class="email-note">
+          <strong>Email alerts:</strong> the tracker detects missed days in the browser.
+          Automatic email sending requires the optional EmailJS fields in Settings
+          because a static local page cannot silently send email without an email service.
+        </div>
+        <div class="email-note alert-status" id="alertStatus" aria-live="polite">
+          Alert tracker is ready. It checks for missed work while this page is open.
+        </div>
+      </section>
+
+      <section class="dashboard" id="dashboard">
+        <div class="section-heading">
+          <p class="eyebrow">Home dashboard</p>
+          <h2>Overall Progress</h2>
+        </div>
+        <div class="dashboard-grid">
+          <article class="stat-card">
+            <span class="stat-label">Expected Finish</span>
+            <strong id="finishDate">Set a start date</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Date Progress</span>
+            <strong id="dateProgressText">0%</strong>
+            <div class="progress-track"><span id="dateProgressBar"></span></div>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Checklist Progress</span>
+            <strong id="taskProgressText">0%</strong>
+            <div class="progress-track"><span id="taskProgressBar"></span></div>
+          </article>
+          <article class="stat-card alert-card">
+            <span class="stat-label">Missed-Day Alerts</span>
+            <strong id="missedCount">0 days</strong>
+            <button class="button mini" id="runAlertCheck" type="button">Check Now</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="milestone-overview" id="milestones">
+        <div class="section-heading">
+          <p class="eyebrow">Clickable roadmap</p>
+          <h2>Milestone Cards</h2>
+        </div>
+        <div class="milestone-cards" id="milestoneCards"></div>
+      </section>
+
+      <section class="milestone-pages" id="milestonePages"></section>
+
+      <section class="resources-index" id="resources">
+        <div class="section-heading">
+          <p class="eyebrow">Reference ladder</p>
+          <h2>Core Resources</h2>
+        </div>
+        <div class="resource-grid">
+          <a href="https://www.abrsm.org/en-gb/performance-grades" target="_blank" rel="noreferrer">ABRSM Performance Grades</a>
+          <a href="https://www.rcmusic.com/learning/examinations/academic-resources-and-policies/syllabi-and-syllabi-errata" target="_blank" rel="noreferrer">RCM Syllabi</a>
+          <a href="https://imslp.org/wiki/Category:For_violin" target="_blank" rel="noreferrer">IMSLP Violin Scores</a>
+          <a href="https://www.8notes.com/violin/" target="_blank" rel="noreferrer">8notes Violin Lessons</a>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <details class="settings">
+          <summary>Email Service Settings</summary>
+          <p>
+            To send automatic missed-day emails from this static page, create an
+            EmailJS account and template, then paste the values below. The template
+            should accept: <code>to_email</code>, <code>subject</code>, and
+            <code>message</code>.
+          </p>
+          <div class="settings-grid">
+            <label>EmailJS public key <input id="emailJsKey" type="text" placeholder="public key"></label>
+            <label>Service ID <input id="emailJsService" type="text" placeholder="service id"></label>
+            <label>Template ID <input id="emailJsTemplate" type="text" placeholder="template id"></label>
+          </div>
+          <button class="button mini" id="saveEmailConfig" type="button">Save Email Config</button>
+        </details>
+      </section>
+    </main>
+
+    <footer>
+      <p>Practice slowly enough to sound good. Record often. Tune obsessively. Get feedback every 4-8 weeks.</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
