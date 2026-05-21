@@ -237,7 +237,7 @@ section { scroll-margin-top: 28px; }
 }
 
 .setup-panel {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: end;
   background: white;
   border: 3px solid var(--ink);
@@ -252,7 +252,7 @@ label {
   font-weight: 850;
 }
 
-input {
+input, select {
   width: 100%;
   min-height: 44px;
   border: 2px solid var(--ink);
@@ -269,7 +269,7 @@ input {
   border-left: 6px solid var(--green);
 }
 
-.dashboard-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 54px; }
+.dashboard-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); margin-bottom: 54px; }
 .stat-card, .milestone-card, .milestone-page, .settings {
   background: white;
   border: 3px solid var(--ink);
@@ -285,6 +285,7 @@ input {
   margin-bottom: 10px;
 }
 .stat-card strong { display: block; font-size: 1.5rem; line-height: 1.15; }
+.stat-card small { display: block; margin-top: 8px; color: var(--muted); font-weight: 800; line-height: 1.35; }
 .progress-track {
   overflow: hidden;
   height: 15px;

@@ -1,5 +1,32 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const learningTiers = {
+  accelerated: {
+    label: "Accelerated",
+    totalDays: 365,
+    dailyHours: "2-3 hours",
+    dailyItems: 7,
+    weeklyItems: 42,
+    description: "High-intensity daily work with faster milestone turnover."
+  },
+  moderate: {
+    label: "Moderate",
+    totalDays: 730,
+    dailyHours: "60-90 minutes",
+    dailyItems: 5,
+    weeklyItems: 30,
+    description: "Balanced progress with steady practice and recovery time."
+  },
+  recreational: {
+    label: "Recreational",
+    totalDays: 1825,
+    dailyHours: "20-45 minutes",
+    dailyItems: 3,
+    weeklyItems: 15,
+    description: "Light, sustainable practice for hobby learning."
+  }
+};
+
 const milestones = [
   {
     id: "phase-0",
@@ -222,6 +249,7 @@ const milestones = [
 
 const state = {
   startDate: "",
+  learningTier: "moderate",
   email: "debuggkim@gmail.com",
   alertTime: "20:00",
   checks: {},
@@ -233,6 +261,7 @@ function loadState() {
   const saved = JSON.parse(localStorage.getItem("violinMasteryState") || "{}");
   Object.assign(state, saved);
   if (!state.startDate) state.startDate = new Date().toISOString().slice(0, 10);
+  if (!learningTiers[state.learningTier]) state.learningTier = "moderate";
 }
 
 function saveState() {
@@ -255,12 +284,46 @@ function addDays(date, days) {
 }
 
 function totalDays() {
-  return milestones.reduce((sum, item) => sum + item.duration, 0);
+  return currentTier().totalDays;
+}
+
+function currentTier() {
+  return learningTiers[state.learningTier] || learningTiers.moderate;
+}
+
+function scaledDurations() {
+  const tier = currentTier();
+  const setupDays = tier.totalDays === 1825 ? 14 : 7;
+  const remainingDays = tier.totalDays - setupDays;
+  const weightedMilestones = milestones.slice(1);
+  const weightTotal = weightedMilestones.reduce((sum, item) => sum + item.duration, 0);
+  const raw = weightedMilestones.map(item => ({
+    id: item.id,
+    days: Math.max(1, Math.round((item.duration / weightTotal) * remainingDays))
+  }));
+  let delta = remainingDays - raw.reduce((sum, item) => sum + item.days, 0);
+  let cursor = raw.length - 1;
+  while (delta !== 0) {
+    const item = raw[cursor];
+    if (delta > 0) {
+      item.days += 1;
+      delta -= 1;
+    } else if (item.days > 1) {
+      item.days -= 1;
+      delta += 1;
+    }
+    cursor = (cursor - 1 + raw.length) % raw.length;
+  }
+  return Object.fromEntries([[milestones[0].id, setupDays], ...raw.map(item => [item.id, item.days])]);
+}
+
+function milestoneDuration(milestone) {
+  return scaledDurations()[milestone.id];
 }
 
 function milestoneStart(index) {
   const start = parseDate(state.startDate);
-  const offset = milestones.slice(0, index).reduce((sum, item) => sum + item.duration, 0);
+  const offset = milestones.slice(0, index).reduce((sum, item) => sum + milestoneDuration(item), 0);
   return addDays(start, offset);
 }
 
@@ -269,31 +332,53 @@ function dayKey(milestoneId, day, taskIndex) {
 }
 
 function getDayTasks(milestone, day) {
-  if (milestone.id === "phase-0") return milestone.tasks;
+  const tier = currentTier();
+  let baseTasks;
+  if (milestone.id === "phase-0") baseTasks = milestone.tasks;
   if (milestone.id === "phase-4") {
     const weekly = milestone.tasks[(day - 1) % milestone.tasks.length];
-    return [
+    baseTasks = [
       weekly,
       "10 min: tone warm-up and relaxed posture check.",
       "15 min: scales or arpeggios with tuner spot checks.",
       "20 min: repertoire or etude in small slow sections.",
       "5 min: reflection note and tomorrow's focus."
     ];
+  } else {
+    baseTasks = milestone.tasks;
   }
-  return milestone.tasks;
+  return adjustTasksForTier(baseTasks, milestone, tier);
+}
+
+function adjustTasksForTier(baseTasks, milestone, tier) {
+  const tasks = [...baseTasks];
+  if (tier === learningTiers.accelerated) {
+    tasks.push(`Extra block: focused technique sprint until today's total practice reaches ${tier.dailyHours}.`);
+    tasks.push("Weekly target: record, review, or perform at least one full run-through.");
+  }
+  if (tier === learningTiers.recreational) {
+    tasks.push("Keep one small win in your notebook so the habit stays enjoyable.");
+  }
+  if (tasks.length >= tier.dailyItems) return tasks.slice(0, tier.dailyItems);
+  while (tasks.length < tier.dailyItems) {
+    tasks.push(`Practice reflection: choose tomorrow's smallest useful next step for ${milestone.title}.`);
+  }
+  return tasks;
 }
 
 function renderCards() {
   const container = document.getElementById("milestoneCards");
   container.innerHTML = milestones.map((m, index) => {
     const start = milestoneStart(index);
-    const end = addDays(start, m.duration - 1);
+    const duration = milestoneDuration(m);
+    const end = addDays(start, duration - 1);
     const pct = milestoneProgress(m);
     return `
       <a class="milestone-card" href="#${m.id}" style="border-top-color:${m.color}">
-        <span class="pill">${m.duration} days</span>
+        <span class="pill">${duration} days</span>
         <h3>${m.title}</h3>
         <p>${m.goal}</p>
+        <p><strong>${currentTier().dailyHours}</strong> per practice day</p>
         <p><strong>${formatDate(start)}</strong> to <strong>${formatDate(end)}</strong></p>
         <div class="progress-track"><span style="width:${pct}%; background:${m.color}"></span></div>
         <p>${pct}% checklist complete</p>
@@ -306,8 +391,9 @@ function renderMilestones() {
   const container = document.getElementById("milestonePages");
   container.innerHTML = milestones.map((m, index) => {
     const start = milestoneStart(index);
-    const end = addDays(start, m.duration - 1);
-    const options = Array.from({ length: m.duration }, (_, i) => `<option value="${i + 1}">Day ${i + 1} - ${formatDate(addDays(start, i))}</option>`).join("");
+    const duration = milestoneDuration(m);
+    const end = addDays(start, duration - 1);
+    const options = Array.from({ length: duration }, (_, i) => `<option value="${i + 1}">Day ${i + 1} - ${formatDate(addDays(start, i))}</option>`).join("");
     const checklist = renderChecklist(m, 1);
     const mastery = m.mastery.map(item => `<li>${item}</li>`).join("");
     const resources = m.resources.map(([label, url]) => `<a href="${url}" target="_blank" rel="noreferrer">${label}</a>`).join("");
@@ -329,7 +415,8 @@ function renderMilestones() {
           </div>
           <div class="panel">
             <h4>Milestone Targets</h4>
-            <p><strong>Practice:</strong> ${m.practice}</p>
+            <p><strong>Selected pace:</strong> ${currentTier().label} - ${currentTier().description}</p>
+            <p><strong>Practice:</strong> ${currentTier().dailyHours} daily, about ${currentTier().weeklyItems} checklist items weekly.</p>
             <ul>${mastery}</ul>
             <h4>Helpful Resources</h4>
             <div class="resource-list">${resources}</div>
@@ -356,7 +443,7 @@ function renderChecklist(milestone, day) {
 function milestoneProgress(milestone) {
   let done = 0;
   let total = 0;
-  for (let day = 1; day <= milestone.duration; day++) {
+  for (let day = 1; day <= milestoneDuration(milestone); day++) {
     const tasks = getDayTasks(milestone, day);
     total += tasks.length;
     tasks.forEach((_, index) => {
@@ -370,7 +457,7 @@ function overallTaskProgress() {
   let done = 0;
   let total = 0;
   milestones.forEach(m => {
-    for (let day = 1; day <= m.duration; day++) {
+    for (let day = 1; day <= milestoneDuration(m); day++) {
       const tasks = getDayTasks(m, day);
       total += tasks.length;
       tasks.forEach((_, index) => {
@@ -392,13 +479,14 @@ function currentRoadmapDay() {
 function locateDay(roadmapDay) {
   let cursor = 0;
   for (const m of milestones) {
-    if (roadmapDay <= cursor + m.duration) {
+    const duration = milestoneDuration(m);
+    if (roadmapDay <= cursor + duration) {
       return { milestone: m, day: roadmapDay - cursor };
     }
-    cursor += m.duration;
+    cursor += duration;
   }
   const last = milestones[milestones.length - 1];
-  return { milestone: last, day: last.duration };
+  return { milestone: last, day: milestoneDuration(last) };
 }
 
 function updateDashboard() {
@@ -410,6 +498,8 @@ function updateDashboard() {
   const missed = findMissedDays();
 
   document.getElementById("finishDate").textContent = formatDate(finish);
+  document.getElementById("tierSummary").textContent = `${currentTier().label} - ${Math.round(totalDays() / 365)} year${totalDays() === 365 ? "" : "s"}`;
+  document.getElementById("workloadSummary").textContent = `${currentTier().dailyHours} daily; ${currentTier().dailyItems} tasks/day; ${currentTier().weeklyItems} tasks/week`;
   document.getElementById("dateProgressText").textContent = `${datePct}%`;
   document.getElementById("dateProgressBar").style.width = `${datePct}%`;
   document.getElementById("taskProgressText").textContent = `${taskPct}%`;
@@ -512,6 +602,7 @@ function bindEvents() {
   document.getElementById("setupForm").addEventListener("submit", event => {
     event.preventDefault();
     state.startDate = document.getElementById("startDate").value;
+    state.learningTier = document.getElementById("learningTier").value;
     state.email = document.getElementById("alertEmail").value;
     state.alertTime = document.getElementById("alertTime").value;
     saveState();
@@ -561,6 +652,7 @@ function bindEvents() {
 
 function renderAll() {
   document.getElementById("startDate").value = state.startDate;
+  document.getElementById("learningTier").value = state.learningTier;
   document.getElementById("alertEmail").value = state.email;
   document.getElementById("alertTime").value = state.alertTime;
   document.getElementById("emailJsKey").value = state.emailConfig?.key || "";

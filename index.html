@@ -62,6 +62,14 @@
             <input id="startDate" type="date" required>
           </label>
           <label>
+            Learning pace
+            <select id="learningTier" required>
+              <option value="moderate">Moderate learning - 2 years</option>
+              <option value="accelerated">Accelerated learning - 1 year</option>
+              <option value="recreational">Recreational learning - 5 years</option>
+            </select>
+          </label>
+          <label>
             Alert email
             <input id="alertEmail" type="email" value="debuggkim@gmail.com" required>
           </label>
@@ -90,6 +98,11 @@
           <article class="stat-card">
             <span class="stat-label">Expected Finish</span>
             <strong id="finishDate">Set a start date</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Learning Pace</span>
+            <strong id="tierSummary">Moderate</strong>
+            <small id="workloadSummary">Daily and weekly load</small>
           </article>
           <article class="stat-card">
             <span class="stat-label">Date Progress</span>
